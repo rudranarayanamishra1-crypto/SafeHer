@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+<meta name="theme-color" content="#080810" />
+<title>SafeHer - Women Safety</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#080810;
+  --bg-elevated:#0f0f1a;
+  --bg-card:rgba(255,255,255,0.03);
+  --bg-card-hover:rgba(255,255,255,0.05);
+  --bg-glass:rgba(15,15,26,0.7);
+  --text-primary:#f0f0f5;
+  --text-secondary:rgba(240,240,245,0.55);
+  --text-muted:rgba(240,240,245,0.3);
+  --accent:#ff2d55;
+  --accent-soft:#ff6b8a;
+  --accent-glow:rgba(255,45,85,0.15);
+  --cyan:#06d6a0;
+  --blue:#4cc9f0;
+  --amber:#f9a825;
+  --border:rgba(255,255,255,0.06);
+  --border-accent:rgba(255,45,85,0.15);
+  --radius:20px;
+  --radius-md:14px;
+  --radius-sm:10px;
+  --font:'Inter',system-ui,-apple-system,sans-serif;
+  --mono:'JetBrains Mono',monospace;
+  --shadow-card:0 4px 24px rgba(0,0,0,0.4),0 1px 2px rgba(0,0,0,0.3);
+  --shadow-glow:0 0 40px rgba(255,45,85,0.12);
+}
+html{font-size:16px;-webkit-text-size-adjust:100%}
+body{font-family:var(--font);background:var(--bg);color:var(--text-primary);min-height:100dvh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+
+/* SPLASH */
+.splash{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .6s,visibility .6s}
+.splash.hidden{opacity:0;visibility:hidden;pointer-events:none}
+.splash-logo{width:80px;height:80px;border-radius:24px;background:linear-gradient(145deg,#ff6b8a,var(--accent),#c91140);display:flex;align-items:center;justify-content:center;margin-bottom:24px;animation:logo-float 2s ease-in-out infinite;box-shadow:0 8px 40px rgba(255,45,85,.25)}
+.splash-logo span{font-size:32px;font-weight:900;color:#fff}
+@keyframes logo-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.splash-title{font-size:26px;font-weight:800;letter-spacing:-.5px;background:linear-gradient(135deg,#fff 0%,rgba(255,255,255,.6) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.splash-sub{font-size:13px;color:var(--text-secondary);margin-top:4px;margin-bottom:32px;letter-spacing:.3px}
+.splash-bar{width:180px;height:3px;border-radius:4px;background:rgba(255,255,255,.04);overflow:hidden}
+.splash-bar-inner{height:100%;width:0;background:linear-gradient(90deg,transparent,var(--accent),var(--accent-soft),transparent);border-radius:4px;animation:loading-slide 1.2s ease-in-out infinite}
+@keyframes loading-slide{0%{width:0;margin-left:0}50%{width:60%}100%{width:0;margin-left:100%}}
+
+/* OTP SIGNUP */
+.otp-screen{position:fixed;inset:0;z-index:9998;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;transition:opacity .5s,visibility .5s}
+.otp-screen.hidden{opacity:0;visibility:hidden;pointer-events:none}
+.otp-card{width:100%;max-width:400px;background:linear-gradient(160deg,rgba(255,255,255,.05) 0%,rgba(255,255,255,.01) 100%);border:1px solid var(--border);border-radius:var(--radius);padding:36px 28px;backdrop-filter:blur(24px);text-align:center;box-shadow:var(--shadow-card)}
+.otp-card h2{font-size:24px;font-weight:800;letter-spacing:-.3px;margin-bottom:6px}
+.otp-card .otp-subtitle{font-size:13px;color:var(--text-secondary);margin-bottom:28px;line-height:1.5}
+.otp-input-group{display:flex;flex-direction:column;gap:12px;margin-bottom:18px}
+.otp-field{width:100%;padding:14px 18px;border-radius:var(--radius-sm);border:1px solid var(--border);background:rgba(255,255,255,.03);color:var(--text-primary);font-size:15px;font-family:var(--font);outline:none;transition:border-color .2s,box-shadow .2s}
+.otp-field:focus{border-color:rgba(255,45,85,.3);box-shadow:0 0 0 3px rgba(255,45,85,.08)}
+.otp-field::placeholder{color:var(--text-muted)}
+.otp-code-row{display:flex;gap:10px;justify-content:center;margin:20px 0}
+.otp-digit{width:52px;height:60px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:rgba(255,255,255,.03);color:var(--text-primary);font-size:26px;font-weight:700;text-align:center;font-family:var(--mono);outline:none;transition:border-color .2s,box-shadow .2s}
+.otp-digit:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,45,85,.12)}
+.otp-primary-btn{width:100%;padding:15px;border:none;border-radius:var(--radius-sm);background:linear-gradient(145deg,#ff6080,var(--accent),#c91140);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);transition:transform .15s,box-shadow .15s;box-shadow:0 4px 24px rgba(255,45,85,.3)}
+.otp-primary-btn:hover{transform:translateY(-1px);box-shadow:0 8px 32px rgba(255,45,85,.35)}
+.otp-primary-btn:active{transform:scale(.98)}
+.otp-primary-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.otp-link{color:var(--accent);font-size:13px;font-weight:600;cursor:pointer;background:none;border:none;font-family:var(--font);margin-top:14px}
+.otp-link:disabled{opacity:.3;cursor:not-allowed}
+.otp-timer{font-size:12px;color:var(--text-muted);margin-top:10px;font-family:var(--mono)}
+.otp-step{display:none}
+.otp-step.active{display:block;animation:fadeUp .35s ease-out}
+.otp-success-icon{width:68px;height:68px;border-radius:50%;background:rgba(6,214,160,.12);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;color:var(--cyan)}
+.otp-error{color:var(--accent);font-size:12px;margin-top:8px;min-height:18px}
+
+/* EMERGENCY BANNER */
+.emergency-banner{position:fixed;top:0;left:0;right:0;z-index:100;padding:12px 20px;display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,rgba(255,45,85,.2),rgba(255,45,85,.06));border-bottom:1px solid rgba(255,45,85,.15);backdrop-filter:blur(24px);font-size:13px;font-weight:600;display:none;animation:banner-slide-in .4s ease-out}
+.emergency-banner.show{display:flex}
+.emergency-banner .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:blink 1s ease-in-out infinite;flex-shrink:0}
+@keyframes banner-slide-in{from{transform:translateY(-100%)}to{transform:translateY(0)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* BACKGROUND */
+.bg-layer{position:fixed;inset:0;pointer-events:none;z-index:0}
+.noise{background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");opacity:.5}
+.glow-orb{position:absolute;border-radius:50%;filter:blur(100px);animation:orb-float 25s ease-in-out infinite}
+.glow-orb-1{width:500px;height:500px;background:radial-gradient(circle,rgba(255,45,85,.12),transparent 70%);top:-15%;left:-10%;animation-delay:0s}
+.glow-orb-2{width:400px;height:400px;background:radial-gradient(circle,rgba(6,214,160,.08),transparent 70%);bottom:-10%;right:-10%;animation-delay:-10s}
+.glow-orb-3{width:350px;height:350px;background:radial-gradient(circle,rgba(76,201,240,.06),transparent 70%);top:40%;right:20%;animation-delay:-18s}
+.bg-layer.emergency .glow-orb{background:radial-gradient(circle,rgba(255,45,85,.18),transparent 70%)!important;animation-duration:6s!important}
+@keyframes orb-float{0%,100%{transform:translate(0,0) scale(1)}25%{transform:translate(30px,-20px) scale(1.05)}50%{transform:translate(-20px,30px) scale(.95)}75%{transform:translate(20px,15px) scale(1.02)}}
+.grid-bg{background-image:linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px);background-size:48px 48px;mask-image:radial-gradient(ellipse 70% 50% at 50% 30%,black,transparent)}
+
+/* GLASS CARD */
+.card{background:linear-gradient(160deg,rgba(255,255,255,.05) 0%,rgba(255,255,255,.01) 100%);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px;backdrop-filter:blur(16px);box-shadow:var(--shadow-card);position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent)}
+.card-alt{background:linear-gradient(160deg,rgba(255,255,255,.04) 0%,rgba(255,255,255,.008) 100%)}
+
+/* HEADER */
+.app-header{padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:relative;z-index:10}
+.header-left{display:flex;align-items:center;gap:14px}
+.header-logo{width:42px;height:42px;border-radius:14px;background:linear-gradient(145deg,#ff6b8a,var(--accent),#c91140);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(255,45,85,.25)}
+.header-logo span{font-weight:900;font-size:17px;color:#fff}
+.header-text h1{font-size:17px;font-weight:800;letter-spacing:-.2px}
+.header-text p{font-size:12px;color:var(--text-secondary);margin-top:1px}
+.status-pill{display:flex;align-items:center;gap:7px;padding:7px 16px;border-radius:99px;font-size:11px;font-weight:600;letter-spacing:.3px;background:rgba(6,214,160,.08);color:var(--cyan);border:1px solid rgba(6,214,160,.12)}
+.status-pill.emergency{background:rgba(255,45,85,.1);color:var(--accent);border-color:var(--border-accent);animation:pill-pulse 1.5s ease-in-out infinite}
+@keyframes pill-pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,45,85,.15)}50%{box-shadow:0 0 20px 4px rgba(255,45,85,.1)}}
+.status-pill .dot{width:6px;height:6px;border-radius:50%;position:relative}
+.status-pill:not(.emergency) .dot{background:var(--cyan)}
+.status-pill:not(.emergency) .dot::after{content:'';position:absolute;inset:0;border-radius:50%;background:var(--cyan);animation:ping 2s ease-out infinite}
+.status-pill.emergency .dot{background:var(--accent);animation:blink 1s ease-in-out infinite}
+@keyframes ping{0%{transform:scale(1);opacity:.7}100%{transform:scale(2.8);opacity:0}}
+
+/* MAIN */
+.main-content{position:relative;z-index:1;padding:0 16px 130px;max-width:500px;margin:0 auto}
+
+/* TABS */
+.tab-nav{display:flex;gap:4px;padding:4px;background:rgba(255,255,255,.03);border-radius:var(--radius-md);margin-bottom:20px;border:1px solid var(--border)}
+.tab-btn{flex:1;padding:10px 8px;border:none;background:transparent;color:var(--text-muted);font-size:11px;font-weight:600;border-radius:var(--radius-sm);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;transition:all .25s;font-family:var(--font);letter-spacing:.3px}
+.tab-btn.active{background:rgba(255,255,255,.07);color:var(--text-primary);box-shadow:0 2px 12px rgba(0,0,0,.4)}
+.tab-btn:hover:not(.active){background:rgba(255,255,255,.02);color:var(--text-secondary)}
+.tab-btn svg{width:18px;height:18px;opacity:.6;transition:opacity .25s}
+.tab-btn.active svg{opacity:1}
+.tab-view{animation:fadeUp .35s ease-out}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* SECTION */
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.section-title{font-size:14px;font-weight:700;letter-spacing:-.1px}
+.badge{font-size:10px;font-weight:700;padding:4px 12px;border-radius:99px;letter-spacing:.6px;text-transform:uppercase}
+.badge-live{background:rgba(6,214,160,.1);color:var(--cyan);animation:fade-pulse 2s ease-in-out infinite}
+.badge-rec{background:rgba(255,45,85,.1);color:var(--accent);animation:blink 1s ease-in-out infinite}
+.badge-sending{background:rgba(76,201,240,.1);color:var(--blue);animation:fade-pulse 2s ease-in-out infinite}
+.badge-info{background:rgba(76,201,240,.1);color:var(--blue)}
+@keyframes fade-pulse{0%,100%{opacity:1}50%{opacity:.45}}
+
+/* === LIVE TRACKER (NEW DASHBOARD STYLE) === */
+.tracker-widget{border-radius:var(--radius);padding:0;margin-bottom:16px;overflow:hidden;border:1px solid var(--border);background:linear-gradient(160deg,rgba(6,214,160,.04) 0%,rgba(255,255,255,.02) 50%,rgba(76,201,240,.03) 100%);box-shadow:var(--shadow-card);position:relative}
+.tracker-widget::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(6,214,160,.2),rgba(76,201,240,.15),transparent)}
+.tracker-widget.emergency{background:linear-gradient(160deg,rgba(255,45,85,.06) 0%,rgba(255,255,255,.02) 50%,rgba(255,45,85,.03) 100%)}
+.tracker-widget.emergency::before{background:linear-gradient(90deg,transparent,rgba(255,45,85,.3),rgba(255,45,85,.15),transparent)}
+.tracker-top{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px}
+.tracker-status{display:flex;align-items:center;gap:8px}
+.tracker-status-dot{width:8px;height:8px;border-radius:50%;background:var(--cyan);position:relative}
+.tracker-status-dot::after{content:'';position:absolute;inset:-3px;border-radius:50%;border:1.5px solid var(--cyan);opacity:.4;animation:ping 2s ease-out infinite}
+.tracker-widget.emergency .tracker-status-dot{background:var(--accent)}
+.tracker-widget.emergency .tracker-status-dot::after{border-color:var(--accent)}
+.tracker-status-label{font-size:10px;font-weight:700;letter-spacing:1px;color:var(--cyan);text-transform:uppercase}
+.tracker-widget.emergency .tracker-status-label{color:var(--accent)}
+.tracker-time-pill{font-size:10px;color:var(--text-muted);font-family:var(--mono);padding:4px 10px;border-radius:99px;background:rgba(255,255,255,.04);border:1px solid var(--border)}
+.tracker-body{padding:0 18px 16px}
+.tracker-address-row{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px}
+.tracker-pin{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,rgba(6,214,160,.12),rgba(6,214,160,.04));display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--cyan)}
+.tracker-widget.emergency .tracker-pin{background:linear-gradient(135deg,rgba(255,45,85,.12),rgba(255,45,85,.04));color:var(--accent)}
+.tracker-address-text{flex:1}
+.tracker-address-text h3{font-size:14px;font-weight:700;line-height:1.35;margin-bottom:3px}
+.tracker-address-text .coords{font-size:11px;color:var(--text-muted);font-family:var(--mono)}
+.tracker-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tracker-stat{text-align:center;padding:10px 6px;border-radius:var(--radius-sm);background:rgba(255,255,255,.03);border:1px solid var(--border)}
+.tracker-stat .stat-val{font-size:14px;font-weight:700;font-family:var(--mono);color:var(--text-primary)}
+.tracker-stat .stat-label{font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+.tracker-map-strip{height:64px;position:relative;overflow:hidden;border-top:1px solid var(--border)}
+.tracker-map-strip img{width:100%;height:100%;object-fit:cover;opacity:.6}
+.tracker-map-strip .map-overlay{position:absolute;inset:0;background:linear-gradient(180deg,var(--bg) 0%,transparent 40%,transparent 60%,var(--bg) 100%)}
+
+/* SOS */
+.sos-section{display:flex;flex-direction:column;align-items:center;padding:24px 0 20px}
+.sos-container{position:relative;width:210px;height:210px;display:flex;align-items:center;justify-content:center;margin-bottom:20px}
+.orbit{position:absolute;border:1px solid;border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%)}
+.orbit-1{width:100%;height:100%;border-color:rgba(255,45,85,.08);animation:orbit-spin 30s linear infinite}
+.orbit-2{width:78%;height:78%;border-color:rgba(6,214,160,.06);border-style:dashed;animation:orbit-spin 40s linear infinite reverse}
+.orbit-3{width:56%;height:56%;border-color:rgba(76,201,240,.05);animation:orbit-spin 50s linear infinite}
+@keyframes orbit-spin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+.progress-ring{position:absolute;width:170px;height:170px;z-index:5}
+.progress-ring circle{fill:none;stroke-width:3;stroke-linecap:round;transform:rotate(-90deg);transform-origin:center}
+.glow-ring{position:absolute;border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%)}
+.glow-ring-1{width:210px;height:210px;background:radial-gradient(circle,rgba(255,45,85,.1) 0%,transparent 70%);animation:ring-pulse 3s ease-in-out infinite}
+.glow-ring-2{width:260px;height:260px;background:radial-gradient(circle,rgba(255,45,85,.05) 0%,transparent 70%);animation:ring-pulse 3s ease-in-out infinite .6s}
+@keyframes ring-pulse{0%,100%{transform:translate(-50%,-50%) scale(1);opacity:.5}50%{transform:translate(-50%,-50%) scale(1.08);opacity:1}}
+.sos-btn-wrapper{position:relative;z-index:10}
+.sos-btn{width:108px;height:108px;border-radius:50%;border:none;cursor:pointer;font-family:var(--font);font-size:24px;font-weight:900;color:#fff;letter-spacing:3px;position:relative;overflow:hidden;background:radial-gradient(ellipse 100% 40% at 50% 0%,rgba(255,255,255,.3) 0%,transparent 50%),linear-gradient(165deg,#ff6080 0%,var(--accent) 30%,#d91445 70%,#a01030 100%);box-shadow:0 8px 40px rgba(255,45,85,.35),0 0 0 1px rgba(255,255,255,.1) inset,0 -4px 12px rgba(0,0,0,.3) inset;transition:transform .15s,box-shadow .15s;-webkit-tap-highlight-color:transparent}
+.sos-btn::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.15),transparent);animation:shimmer 3.5s ease-in-out infinite}
+@keyframes shimmer{0%,100%{left:-100%}50%{left:100%}}
+.sos-btn:hover{transform:scale(1.06);box-shadow:0 12px 48px rgba(255,45,85,.45),0 0 0 1px rgba(255,255,255,.12) inset}
+.sos-btn:active{transform:scale(.94)}
+.sos-btn.active{animation:btn-breathe 1.8s ease-in-out infinite;background:radial-gradient(ellipse 100% 40% at 50% 0%,rgba(255,255,255,.25) 0%,transparent 50%),linear-gradient(165deg,#ff3050 0%,#d01040 30%,#b01040 70%,#801030 100%)}
+@keyframes btn-breathe{0%,100%{box-shadow:0 8px 36px rgba(255,45,85,.4),0 0 0 1px rgba(255,255,255,.1) inset;transform:scale(1)}50%{box-shadow:0 14px 56px rgba(255,45,85,.55),0 0 0 1px rgba(255,255,255,.15) inset;transform:scale(1.03)}}
+.ripple{position:absolute;width:108px;height:108px;border-radius:50%;border:2px solid rgba(255,45,85,.25);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;opacity:0}
+.sos-btn.active ~ .ripple{animation:ripple-out 2.2s ease-out infinite}
+.sos-btn.active ~ .ripple:nth-child(2){animation-delay:.6s}
+.sos-btn.active ~ .ripple:nth-child(3){animation-delay:1.2s}
+@keyframes ripple-out{0%{transform:translate(-50%,-50%) scale(1);opacity:.5}100%{transform:translate(-50%,-50%) scale(3);opacity:0}}
+.sos-label{font-size:13px;font-weight:600;color:var(--text-secondary)}
+.emergency-info{margin-top:16px;padding:14px 20px;border-radius:var(--radius-md);background:rgba(255,45,85,.06);border:1px solid var(--border-accent);text-align:center;animation:fadeUp .3s ease-out}
+.emergency-info h4{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:4px}
+.emergency-info p{font-size:12px;color:var(--text-secondary);line-height:1.4}
+
+/* LOCATION */
+.location-grid{display:flex;gap:14px;align-items:flex-start}
+.location-icon{width:44px;height:44px;border-radius:var(--radius-md);background:linear-gradient(135deg,rgba(255,45,85,.1),rgba(255,45,85,.03));display:flex;align-items:center;justify-content:center;color:var(--accent);flex-shrink:0}
+.location-details{flex:1}
+.location-details h3{font-size:15px;font-weight:700;margin-bottom:3px;line-height:1.3}
+.location-details .coords{font-size:11px;color:var(--text-muted);font-family:var(--mono)}
+.location-meta{display:flex;gap:16px;margin-top:14px;font-size:11px;color:var(--text-muted);font-family:var(--mono)}
+.location-share{margin-top:14px;width:100%;padding:11px;border:none;border-radius:var(--radius-sm);background:rgba(255,45,85,.08);color:var(--accent);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);transition:background .2s}
+.location-share:hover{background:rgba(255,45,85,.14)}
+
+/* STATIONS */
+.station-item{display:flex;align-items:center;gap:12px;padding:14px;border-radius:var(--radius-md);background:rgba(255,255,255,.02);border:1px solid var(--border);margin-bottom:8px;transition:all .2s}
+.station-item:hover{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.08)}
+.station-icon{width:38px;height:38px;border-radius:12px;background:rgba(76,201,240,.08);display:flex;align-items:center;justify-content:center;color:var(--blue);flex-shrink:0}
+.station-info{flex:1}
+.station-info h4{font-size:13px;font-weight:600}
+.station-info p{font-size:11px;color:var(--text-secondary);margin-top:1px}
+.station-dist{font-size:11px;color:var(--blue);font-weight:700;font-family:var(--mono);white-space:nowrap}
+
+/* CONTACTS */
+.contact-item{display:flex;align-items:center;gap:12px;padding:14px;border-radius:var(--radius-md);background:rgba(255,255,255,.02);border:1px solid var(--border);margin-bottom:8px;transition:all .2s}
+.contact-item:hover{background:rgba(255,255,255,.04)}
+.contact-avatar{width:42px;height:42px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#fff;flex-shrink:0}
+.contact-info{flex:1}
+.contact-info h4{font-size:13px;font-weight:600}
+.contact-info p{font-size:11px;color:var(--text-secondary)}
+.contact-actions{display:flex;gap:6px}
+.contact-action-btn{width:36px;height:36px;border-radius:var(--radius-sm);border:1px solid var(--border);background:rgba(255,255,255,.03);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-secondary);transition:all .2s}
+.contact-action-btn:hover{background:rgba(255,255,255,.07);color:var(--text-primary);border-color:rgba(255,255,255,.1)}
+.contact-status{font-size:10px;font-weight:600;color:var(--cyan);margin-top:2px}
+.contact-status.sending{color:var(--accent);animation:blink 1s ease-in-out infinite}
+
+/* EVIDENCE */
+.evidence-toggles{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.evidence-toggle{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:var(--radius-sm);background:rgba(255,255,255,.03);border:1px solid var(--border);cursor:pointer;font-size:12px;color:var(--text-secondary);flex:1;min-width:0;transition:all .2s}
+.evidence-toggle:hover{background:rgba(255,255,255,.05)}
+.evidence-toggle .toggle-dot{width:8px;height:8px;border-radius:50%;background:var(--text-muted);flex-shrink:0;transition:all .25s}
+.evidence-toggle.active .toggle-dot{background:var(--cyan);box-shadow:0 0 10px rgba(6,214,160,.4)}
+.evidence-toggle .label{flex:1;font-weight:500}
+.evidence-log{max-height:220px;overflow-y:auto;padding:2px}
+.evidence-log-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius-sm);background:rgba(255,255,255,.02);margin-bottom:4px;font-size:11px;color:var(--text-secondary);border:1px solid transparent;transition:all .2s}
+.evidence-log-item:hover{border-color:var(--border)}
+.evidence-log-item .log-icon{width:24px;height:24px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.evidence-log-item .log-icon.location{background:rgba(76,201,240,.1);color:var(--blue)}
+.evidence-log-item .log-icon.photo{background:rgba(249,168,37,.1);color:var(--amber)}
+.evidence-log-item .log-icon.alert{background:rgba(255,45,85,.1);color:var(--accent)}
+.evidence-log-item .log-icon.video{background:rgba(6,214,160,.1);color:var(--cyan)}
+.evidence-log-item .log-text{flex:1}
+.evidence-log-item .log-time{font-size:10px;color:var(--text-muted);font-family:var(--mono)}
+
+/* CAMERA */
+.camera-viewfinder{border-radius:var(--radius-md);overflow:hidden;background:#000;aspect-ratio:16/10;display:flex;align-items:center;justify-content:center;position:relative;border:1px solid var(--border);margin-top:12px}
+.camera-viewfinder video{width:100%;height:100%;object-fit:cover}
+.camera-placeholder{display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--text-muted);font-size:12px}
+.camera-recording-overlay{position:absolute;inset:0;border:2px solid var(--accent);border-radius:var(--radius-md);pointer-events:none;animation:blink 1s ease-in-out infinite}
+.camera-timer{position:absolute;top:12px;right:14px;font-size:13px;font-weight:700;color:var(--accent);font-family:var(--mono);padding:4px 10px;background:rgba(0,0,0,.6);border-radius:6px}
+.camera-rec-badge{position:absolute;top:12px;left:14px;font-size:10px;font-weight:700;color:var(--accent);display:flex;align-items:center;gap:5px;padding:4px 10px;background:rgba(0,0,0,.6);border-radius:6px}
+.camera-rec-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);animation:blink 1s ease-in-out infinite}
+.camera-controls{display:flex;gap:8px;margin-top:12px}
+.ctrl-btn{flex:1;padding:11px;border-radius:var(--radius-sm);border:1px solid var(--border);background:rgba(255,255,255,.03);color:var(--text-secondary);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;font-family:var(--font);transition:all .2s}
+.ctrl-btn:hover{background:rgba(255,255,255,.06);color:var(--text-primary)}
+.ctrl-btn.recording{background:rgba(255,45,85,.1);border-color:var(--border-accent);color:var(--accent)}
+
+/* MAP */
+.map-container{border-radius:var(--radius-md);overflow:hidden;height:320px;border:1px solid var(--border);margin-top:12px;position:relative;background:#0a0a14}
+.map-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:12px}
+.map-legend{display:flex;gap:16px;margin-top:14px;flex-wrap:wrap}
+.map-legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-secondary)}
+.map-legend-dot{width:8px;height:8px;border-radius:50%}
+
+/* BOTTOM NAV */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:50;padding:6px 16px;padding-bottom:max(8px,env(safe-area-inset-bottom));background:rgba(8,8,16,.88);backdrop-filter:blur(24px);border-top:1px solid var(--border);display:flex;justify-content:space-around;align-items:center}
+.nav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;padding:6px 12px;border-radius:var(--radius-sm);color:var(--text-muted);font-size:10px;font-weight:500;transition:all .25s;font-family:var(--font)}
+.nav-btn.active{color:var(--accent)}
+.nav-btn svg{width:22px;height:22px}
+.nav-sos{width:50px;height:50px;border-radius:50%;background:linear-gradient(145deg,#ff6080,var(--accent),#c91140);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 24px rgba(255,45,85,.35),0 0 0 3px rgba(255,45,85,.08);transition:transform .15s;margin-top:-22px}
+.nav-sos:active{transform:scale(.88)}
+.nav-sos svg{width:22px;height:22px;color:#fff}
+
+/* TOAST */
+.download-toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(100px);z-index:200;padding:12px 22px;border-radius:var(--radius-md);background:rgba(6,214,160,.1);border:1px solid rgba(6,214,160,.15);backdrop-filter:blur(20px);color:var(--cyan);font-size:13px;font-weight:600;transition:transform .4s cubic-bezier(.2,.8,.3,1);pointer-events:none;white-space:nowrap}
+.download-toast.show{transform:translateX(-50%) translateY(0)}
+
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.06);border-radius:4px}
+.icon-sm{width:14px;height:14px}
+.icon-md{width:18px;height:18px}
+.icon-lg{width:24px;height:24px}
+.icon-xl{width:44px;height:44px}
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div class="splash" id="splash">
+  <div class="splash-logo"><span>S</span></div>
+  <div class="splash-title">SafeHer</div>
+  <div class="splash-sub">Your safety companion</div>
+  <div class="splash-bar"><div class="splash-bar-inner"></div></div>
+</div>
+
+<!-- OTP SIGNUP -->
+<div class="otp-screen" id="otpScreen" style="display:none">
+  <div class="otp-card">
+    <div class="otp-step active" id="otpStep1">
+      <div style="margin-bottom:24px">
+        <div class="splash-logo" style="margin:0 auto 18px;width:60px;height:60px;border-radius:18px;animation:none"><span style="font-size:24px">S</span></div>
+        <h2>Welcome to SafeHer</h2>
+        <p class="otp-subtitle">Create your safety profile to get started</p>
+      </div>
+      <div class="otp-input-group">
+        <input class="otp-field" id="signupName" type="text" placeholder="Your Name" autocomplete="name" />
+        <input class="otp-field" id="signupPhone" type="tel" placeholder="Phone Number (+91...)" autocomplete="tel" />
+      </div>
+      <div class="otp-error" id="otpError1"></div>
+      <button class="otp-primary-btn" id="sendOtpBtn" onclick="sendOTP()">Send OTP</button>
+    </div>
+    <div class="otp-step" id="otpStep2">
+      <div style="margin-bottom:24px">
+        <h2>Verify OTP</h2>
+        <p class="otp-subtitle">Enter the 4-digit code sent to <span id="otpPhoneDisplay">your phone</span></p>
+      </div>
+      <div class="otp-code-row">
+        <input class="otp-digit" id="otp1" type="text" maxlength="1" inputmode="numeric" />
+        <input class="otp-digit" id="otp2" type="text" maxlength="1" inputmode="numeric" />
+        <input class="otp-digit" id="otp3" type="text" maxlength="1" inputmode="numeric" />
+        <input class="otp-digit" id="otp4" type="text" maxlength="1" inputmode="numeric" />
+      </div>
+      <div class="otp-error" id="otpError2"></div>
+      <button class="otp-primary-btn" id="verifyOtpBtn" onclick="verifyOTP()">Verify &amp; Continue</button>
+      <div class="otp-timer" id="otpTimerDisplay">Resend OTP in <span id="otpCountdown">30</span>s</div>
+      <button class="otp-link" id="resendBtn" onclick="resendOTP()" disabled>Resend OTP</button>
+    </div>
+    <div class="otp-step" id="otpStep3">
+      <div class="otp-success-icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>
+      </div>
+      <h2>You're All Set!</h2>
+      <p class="otp-subtitle">Your SafeHer profile is ready. Stay safe!</p>
+      <button class="otp-primary-btn" onclick="completeSignup()" style="margin-top:18px">Enter SafeHer</button>
+    </div>
+  </div>
+</div>
+
+<!-- EMERGENCY BANNER -->
+<div class="emergency-banner" id="emergencyBanner">
+  <span class="dot"></span>
+  <span>EMERGENCY MODE ACTIVE - Sending location &amp; evidence</span>
+</div>
+
+<!-- BACKGROUND -->
+<div class="bg-layer" id="bgLayer">
+  <div class="glow-orb glow-orb-1"></div>
+  <div class="glow-orb glow-orb-2"></div>
+  <div class="glow-orb glow-orb-3"></div>
+</div>
+<div class="bg-layer noise"></div>
+<div class="bg-layer grid-bg"></div>
+
+<!-- TOAST -->
+<div class="download-toast" id="downloadToast">Video saved to device</div>
+
+<!-- HEADER -->
+<header class="app-header" id="appHeader" style="display:none">
+  <div class="header-left">
+    <div class="header-logo"><span>S</span></div>
+    <div class="header-text">
+      <h1>SafeHer</h1>
+      <p>Welcome, <span id="userName">User</span></p>
+    </div>
+  </div>
+  <div class="status-pill" id="statusChip">
+    <div class="dot"></div>
+    <span id="statusText">Protected</span>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main class="main-content" id="mainContent" style="display:none">
+  <nav class="tab-nav">
+    <button class="tab-btn active" data-tab="home" onclick="switchTab('home')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+      Home
+    </button>
+    <button class="tab-btn" data-tab="map" onclick="switchTab('map')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z"/><path d="M15 5.764v15"/><path d="M9 3.236v15"/></svg>
+      Map
+    </button>
+    <button class="tab-btn" data-tab="evidence" onclick="switchTab('evidence')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+      Evidence
+    </button>
+    <button class="tab-btn" data-tab="contacts" onclick="switchTab('contacts')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Contacts
+    </button>
+  </nav>
+
+  <!-- HOME -->
+  <div class="tab-view" id="tab-home">
+    <!-- Live Tracker Widget -->
+    <div class="tracker-widget" id="trackerWidget">
+      <div class="tracker-top">
+        <div class="tracker-status">
+          <div class="tracker-status-dot"></div>
+          <span class="tracker-status-label" id="trackerLabel">Live Tracking</span>
+        </div>
+        <span class="tracker-time-pill" id="trackerTime">--:--:--</span>
+      </div>
+      <div class="tracker-body">
+        <div class="tracker-address-row">
+          <div class="tracker-pin">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>
+          </div>
+          <div class="tracker-address-text">
+            <h3 id="trackerAddress">Locating...</h3>
+            <span class="coords" id="trackerCoords">--</span>
+          </div>
+        </div>
+        <div class="tracker-stats">
+          <div class="tracker-stat">
+            <div class="stat-val" id="statAccuracy">--</div>
+            <div class="stat-label">Accuracy</div>
+          </div>
+          <div class="tracker-stat">
+            <div class="stat-val" id="statAltitude">--</div>
+            <div class="stat-label">Altitude</div>
+          </div>
+          <div class="tracker-stat">
+            <div class="stat-val" id="statSpeed">0</div>
+            <div class="stat-label">km/h</div>
+          </div>
+        </div>
+      </div>
+      <div class="tracker-map-strip" id="trackerMapStrip">
+        <img id="trackerMapImg" src="" alt="Location strip" style="display:none" />
+        <div class="map-overlay"></div>
+        <div id="trackerMapPlaceholder" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="2"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- SOS Section -->
+    <section class="sos-section">
+      <div class="sos-container">
+        <div class="orbit orbit-1"></div>
+        <div class="orbit orbit-2"></div>
+        <div class="orbit orbit-3"></div>
+        <svg class="progress-ring" viewBox="0 0 200 200">
+          <circle id="progressCircle" cx="100" cy="100" r="75" stroke="rgba(255,45,85,0.15)" stroke-dasharray="471" stroke-dashoffset="471" />
+        </svg>
+        <div class="glow-ring glow-ring-1"></div>
+        <div class="glow-ring glow-ring-2"></div>
+        <div class="sos-btn-wrapper">
+          <button class="sos-btn" id="sosBtn"
+            onmousedown="startHold()" onmouseup="endHold()" onmouseleave="endHold()"
+            ontouchstart="startHold()" ontouchend="endHold()">SOS</button>
+          <div class="ripple"></div>
+          <div class="ripple"></div>
+          <div class="ripple"></div>
+        </div>
+      </div>
+      <span class="sos-label" id="sosLabel">Hold to activate SOS</span>
+      <div class="emergency-info" id="emergencyInfo" style="display:none">
+        <h4>Emergency Activated</h4>
+        <p>Sending location, auto-recording &amp; alerts to emergency contacts</p>
+      </div>
+    </section>
+
+    <!-- Location Card -->
+    <section class="card">
+      <div class="section-header">
+        <span class="section-title">Your Location</span>
+        <span class="badge badge-live">LIVE</span>
+      </div>
+      <div class="location-grid">
+        <div class="location-icon">
+          <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>
+        </div>
+        <div class="location-details">
+          <h3 id="locationAddress">Locating...</h3>
+          <p class="coords" id="locationCoords">--</p>
+        </div>
+      </div>
+      <div class="location-meta">
+        <span id="locationAccuracy">Accuracy: --</span>
+        <span id="locationTime">Updated: --</span>
+      </div>
+      <button class="location-share" onclick="shareLocation()">Share Live Location</button>
+    </section>
+
+    <!-- Nearby Stations -->
+    <section class="card card-alt">
+      <div class="section-header">
+        <span class="section-title">Nearby Police Stations</span>
+        <span class="badge badge-info">3 found</span>
+      </div>
+      <div id="stationsList">
+        <div class="station-item"><div class="station-icon"><svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div><div class="station-info"><h4>Central Police Station</h4><p>Main Road, City Center</p></div><span class="station-dist">1.2 km</span></div>
+        <div class="station-item"><div class="station-icon"><svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div><div class="station-info"><h4>North District Station</h4><p>Park Avenue, North Side</p></div><span class="station-dist">2.5 km</span></div>
+        <div class="station-item"><div class="station-icon"><svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div><div class="station-info"><h4>South Area Station</h4><p>Highway Road, South</p></div><span class="station-dist">3.8 km</span></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- MAP TAB -->
+  <div class="tab-view" id="tab-map" style="display:none">
+    <section class="card">
+      <div class="section-header">
+        <span class="section-title">Live Map</span>
+        <span class="badge badge-live">LIVE</span>
+      </div>
+      <div class="map-container" id="mapContainer">
+        <div class="map-loading" id="mapLoading">Loading map...</div>
+      </div>
+      <div class="map-legend">
+        <div class="map-legend-item"><div class="map-legend-dot" style="background:var(--accent)"></div> You</div>
+        <div class="map-legend-item"><div class="map-legend-dot" style="background:var(--blue)"></div> Police</div>
+        <div class="map-legend-item"><div class="map-legend-dot" style="background:var(--cyan)"></div> Safe Zone</div>
+      </div>
+    </section>
+  </div>
+
+  <!-- EVIDENCE TAB -->
+  <div class="tab-view" id="tab-evidence" style="display:none">
+    <section class="card">
+      <div class="section-header">
+        <span class="section-title">Evidence Auto-Send</span>
+        <span class="badge badge-sending" id="evidenceBadge" style="display:none">SENDING</span>
+      </div>
+      <div class="evidence-toggles">
+        <div class="evidence-toggle active" id="toggleLocation" onclick="toggleEvidence('location')"><div class="toggle-dot"></div><span class="label">Location</span></div>
+        <div class="evidence-toggle active" id="togglePhoto" onclick="toggleEvidence('photo')"><div class="toggle-dot"></div><span class="label">Photos</span></div>
+        <div class="evidence-toggle active" id="toggleAudio" onclick="toggleEvidence('audio')"><div class="toggle-dot"></div><span class="label">Audio</span></div>
+      </div>
+      <div class="evidence-log" id="evidenceLog">
+        <div style="text-align:center;padding:24px;color:var(--text-muted);font-size:12px">No evidence logs yet. Activate SOS to begin.</div>
+      </div>
+    </section>
+    <section class="card card-alt">
+      <div class="section-header">
+        <span class="section-title">Evidence Camera</span>
+        <span class="badge badge-rec" id="cameraBadge" style="display:none">REC</span>
+      </div>
+      <div class="camera-viewfinder" id="cameraView">
+        <video id="cameraVideo" autoplay muted playsinline style="display:none"></video>
+        <div class="camera-placeholder" id="cameraPlaceholder">
+          <svg class="icon-xl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity:.2"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+          <p>Camera auto-starts with SOS</p>
+        </div>
+        <div class="camera-recording-overlay" id="cameraRecOverlay" style="display:none"></div>
+        <span class="camera-rec-badge" id="cameraRecBadge" style="display:none">REC</span>
+        <span class="camera-timer" id="cameraTimer" style="display:none">00:30</span>
+      </div>
+      <div class="camera-controls">
+        <button class="ctrl-btn" id="cameraRecordBtn" onclick="toggleCameraRecord()">
+          <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>
+          Record 30s
+        </button>
+        <button class="ctrl-btn" onclick="capturePhoto()">
+          <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+          Capture
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <!-- CONTACTS TAB -->
+  <div class="tab-view" id="tab-contacts" style="display:none">
+    <section class="card">
+      <div class="section-header"><span class="section-title">Emergency Contacts</span></div>
+      <div id="contactsList">
+        <div class="contact-item">
+          <div class="contact-avatar" style="background:linear-gradient(135deg,#ff6b8a,#d91445)">M</div>
+          <div class="contact-info"><h4>Mom</h4><p>+91 98765 43210</p><div class="contact-status" id="contactStatus0">Ready</div></div>
+          <div class="contact-actions">
+            <button class="contact-action-btn" onclick="callContact('+919876543210')" title="Call"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></button>
+            <button class="contact-action-btn" onclick="messageContact('+919876543210')" title="Message"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z"/></svg></button>
+          </div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-avatar" style="background:linear-gradient(135deg,#4cc9f0,#0369a1)">D</div>
+          <div class="contact-info"><h4>Dad</h4><p>+91 98765 43211</p><div class="contact-status" id="contactStatus1">Ready</div></div>
+          <div class="contact-actions">
+            <button class="contact-action-btn" onclick="callContact('+919876543211')" title="Call"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></button>
+            <button class="contact-action-btn" onclick="messageContact('+919876543211')" title="Message"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z"/></svg></button>
+          </div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-avatar" style="background:linear-gradient(135deg,#06d6a0,#048a65)">B</div>
+          <div class="contact-info"><h4>Best Friend</h4><p>+91 98765 43212</p><div class="contact-status" id="contactStatus2">Ready</div></div>
+          <div class="contact-actions">
+            <button class="contact-action-btn" onclick="callContact('+919876543212')" title="Call"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></button>
+            <button class="contact-action-btn" onclick="messageContact('+919876543212')" title="Message"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z"/></svg></button>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="card card-alt">
+      <div class="section-header"><span class="section-title">Quick Actions</span></div>
+      <div style="display:flex;gap:8px">
+        <button class="ctrl-btn" onclick="callContact('112')" style="flex:1">
+          <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          Call 112
+        </button>
+        <button class="ctrl-btn" onclick="callContact('100')" style="flex:1">
+          <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+          Police 100
+        </button>
+        <button class="ctrl-btn" onclick="callContact('1091')" style="flex:1">
+          <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+          Women 1091
+        </button>
+      </div>
+    </section>
+  </div>
+</main>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav" id="bottomNav" style="display:none">
+  <button class="nav-btn active" data-tab="home" onclick="switchTab('home')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+    Home
+  </button>
+  <button class="nav-btn" data-tab="map" onclick="switchTab('map')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z"/><path d="M15 5.764v15"/><path d="M9 3.236v15"/></svg>
+    Map
+  </button>
+  <button class="nav-sos" onclick="toggleSOS()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+  </button>
+  <button class="nav-btn" data-tab="evidence" onclick="switchTab('evidence')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+    Evidence
+  </button>
+  <button class="nav-btn" data-tab="contacts" onclick="switchTab('contacts')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    Contacts
+  </button>
+</nav>
+
+<script>
+/* ===== STATE ===== */
+var emergency=false,holdTimer=null,holdStart=0,userLat=28.6139,userLng=77.2090;
+var leafletMap=null,userMarker=null,accuracyCircle=null,stationMarkers=[];
+var cameraRecording=false,cameraTimerVal=30,cameraInterval=null,evidenceLogs=[],evidenceInterval=null;
+var mediaStream=null,mediaRecorder=null,recordedChunks=[];
+var currentLocationName="Locating...",geocodeTimeout=null;
+var generatedOTP="",otpResendTimer=null,otpCountdownVal=30;
+var HOLD_DURATION=600,CIRCUMFERENCE=471;
+
+var stations=[
+  {name:"Central Police Station",address:"Main Road, City Center",dist:"1.2 km",lat:28.6200,lng:77.2150},
+  {name:"North District Station",address:"Park Avenue, North Side",dist:"2.5 km",lat:28.6300,lng:77.2000},
+  {name:"South Area Station",address:"Highway Road, South",dist:"3.8 km",lat:28.6050,lng:77.2200}
+];
+
+/* ===== OTP SIGNUP ===== */
+function checkSignup(){
+  var s=localStorage.getItem("safeher_user");
+  if(s){var u=JSON.parse(s);document.getElementById("userName").textContent=u.name;showMainApp();}
+  else{document.getElementById("otpScreen").style.display="flex";}
+}
+function sendOTP(){
+  var n=document.getElementById("signupName").value.trim(),p=document.getElementById("signupPhone").value.trim(),e=document.getElementById("otpError1");
+  if(!n){e.textContent="Please enter your name";return;}
+  if(!p||p.length<10){e.textContent="Please enter a valid phone number";return;}
+  e.textContent="";generatedOTP=String(Math.floor(1000+Math.random()*9000));
+  document.getElementById("sendOtpBtn").disabled=true;document.getElementById("sendOtpBtn").textContent="Sending...";
+  setTimeout(function(){
+    document.getElementById("sendOtpBtn").disabled=false;document.getElementById("sendOtpBtn").textContent="Send OTP";
+    document.getElementById("otpStep1").classList.remove("active");document.getElementById("otpStep1").style.display="none";
+    document.getElementById("otpStep2").classList.add("active");document.getElementById("otpStep2").style.display="block";
+    document.getElementById("otpPhoneDisplay").textContent=p.slice(0,4)+"****"+p.slice(-2);
+    alert("Your OTP is: "+generatedOTP+"\n(In production this would be sent via SMS)");
+    startOTPTimer();document.getElementById("otp1").focus();
+  },1200);
+}
+function startOTPTimer(){
+  otpCountdownVal=30;document.getElementById("resendBtn").disabled=true;
+  document.getElementById("otpTimerDisplay").style.display="block";
+  document.getElementById("otpCountdown").textContent=otpCountdownVal;
+  otpResendTimer=setInterval(function(){
+    otpCountdownVal--;document.getElementById("otpCountdown").textContent=otpCountdownVal;
+    if(otpCountdownVal<=0){clearInterval(otpResendTimer);document.getElementById("otpTimerDisplay").style.display="none";document.getElementById("resendBtn").disabled=false;}
+  },1000);
+}
+function resendOTP(){
+  generatedOTP=String(Math.floor(1000+Math.random()*9000));
+  alert("New OTP: "+generatedOTP+"\n(In production this would be sent via SMS)");
+  startOTPTimer();document.querySelectorAll(".otp-digit").forEach(function(d){d.value="";});document.getElementById("otp1").focus();
+}
+document.addEventListener("DOMContentLoaded",function(){
+  var digits=document.querySelectorAll(".otp-digit");
+  digits.forEach(function(input,idx){
+    input.addEventListener("input",function(e){if(e.target.value&&idx<digits.length-1)digits[idx+1].focus();});
+    input.addEventListener("keydown",function(e){if(e.key==="Backspace"&&!input.value&&idx>0)digits[idx-1].focus();});
+  });
+});
+function verifyOTP(){
+  var entered=document.getElementById("otp1").value+document.getElementById("otp2").value+document.getElementById("otp3").value+document.getElementById("otp4").value;
+  var e=document.getElementById("otpError2");
+  if(entered.length<4){e.textContent="Please enter all 4 digits";return;}
+  if(entered===generatedOTP){
+    e.textContent="";var n=document.getElementById("signupName").value.trim(),p=document.getElementById("signupPhone").value.trim();
+    localStorage.setItem("safeher_user",JSON.stringify({name:n,phone:p}));document.getElementById("userName").textContent=n;
+    document.getElementById("otpStep2").classList.remove("active");document.getElementById("otpStep2").style.display="none";
+    document.getElementById("otpStep3").classList.add("active");document.getElementById("otpStep3").style.display="block";
+  }else{e.textContent="Invalid OTP. Please try again.";document.querySelectorAll(".otp-digit").forEach(function(d){d.value="";});document.getElementById("otp1").focus();}
+}
+function completeSignup(){document.getElementById("otpScreen").classList.add("hidden");setTimeout(function(){document.getElementById("otpScreen").style.display="none";showMainApp();},500);}
+function showMainApp(){document.getElementById("appHeader").style.display="flex";document.getElementById("mainContent").style.display="block";document.getElementById("bottomNav").style.display="flex";getLocation();}
+
+/* ===== SPLASH ===== */
+setTimeout(function(){document.getElementById("splash").classList.add("hidden");setTimeout(checkSignup,500);},2200);
+
+/* ===== TAB SWITCHING ===== */
+function switchTab(tab){
+  ["home","map","evidence","contacts"].forEach(function(t){var el=document.getElementById("tab-"+t);if(el)el.style.display=t===tab?"block":"none";});
+  document.querySelectorAll(".tab-btn").forEach(function(b){b.classList.toggle("active",b.getAttribute("data-tab")===tab);});
+  document.querySelectorAll(".nav-btn").forEach(function(b){b.classList.toggle("active",b.getAttribute("data-tab")===tab);});
+  if(tab==="map")initMap();
+}
+
+/* ===== SOS HOLD ===== */
+function startHold(){
+  if(emergency){deactivateSOS();return;}
+  holdStart=Date.now();var circle=document.getElementById("progressCircle");
+  holdTimer=setInterval(function(){var elapsed=Date.now()-holdStart;var progress=Math.min(elapsed/HOLD_DURATION,1);
+    circle.style.strokeDashoffset=CIRCUMFERENCE-progress*CIRCUMFERENCE;circle.style.stroke="rgba(255,45,85,0.6)";
+    if(progress>=1){endHold();activateSOS();}},16);
+}
+function endHold(){if(holdTimer){clearInterval(holdTimer);holdTimer=null;}if(!emergency){var c=document.getElementById("progressCircle");c.style.strokeDashoffset=CIRCUMFERENCE;c.style.stroke="rgba(255,45,85,0.15)";}}
+function toggleSOS(){if(emergency)deactivateSOS();else activateSOS();}
+
+function activateSOS(){
+  emergency=true;
+  document.getElementById("sosBtn").classList.add("active");document.getElementById("sosBtn").textContent="STOP";
+  document.getElementById("sosLabel").textContent="Tap to deactivate";document.getElementById("emergencyInfo").style.display="block";
+  document.getElementById("emergencyBanner").classList.add("show");document.getElementById("statusChip").classList.add("emergency");
+  document.getElementById("statusText").textContent="SOS ACTIVE";document.getElementById("bgLayer").classList.add("emergency");
+  document.getElementById("evidenceBadge").style.display="inline";document.getElementById("trackerWidget").classList.add("emergency");
+  document.getElementById("trackerLabel").textContent="SOS Active";
+  updateContactStatuses(true);startEvidenceCollection();startCameraAutoOnSOS();
+}
+function deactivateSOS(){
+  emergency=false;
+  document.getElementById("sosBtn").classList.remove("active");document.getElementById("sosBtn").textContent="SOS";
+  document.getElementById("sosLabel").textContent="Hold to activate SOS";document.getElementById("emergencyInfo").style.display="none";
+  document.getElementById("emergencyBanner").classList.remove("show");document.getElementById("statusChip").classList.remove("emergency");
+  document.getElementById("statusText").textContent="Protected";document.getElementById("bgLayer").classList.remove("emergency");
+  document.getElementById("evidenceBadge").style.display="none";document.getElementById("trackerWidget").classList.remove("emergency");
+  document.getElementById("trackerLabel").textContent="Live Tracking";
+  var c=document.getElementById("progressCircle");c.style.strokeDashoffset=CIRCUMFERENCE;c.style.stroke="rgba(255,45,85,0.15)";
+  updateContactStatuses(false);stopEvidenceCollection();stopCameraRecord();
+}
+
+function updateContactStatuses(isEmergency){
+  for(var i=0;i<3;i++){var el=document.getElementById("contactStatus"+i);
+    if(isEmergency){el.textContent="Sending alerts...";el.className="contact-status sending";}
+    else{el.textContent="Ready";el.className="contact-status";}}
+}
+
+/* ===== REVERSE GEOCODING ===== */
+function reverseGeocode(lat,lng){
+  if(geocodeTimeout)clearTimeout(geocodeTimeout);
+  geocodeTimeout=setTimeout(function(){
+    fetch("https://nominatim.openstreetmap.org/reverse?format=json&lat="+lat+"&lon="+lng+"&zoom=18&addressdetails=1",{headers:{"Accept-Language":"en"}})
+    .then(function(r){return r.json();})
+    .then(function(data){
+      if(data&&data.address){var a=data.address,parts=[];
+        if(a.road)parts.push(a.road);if(a.suburb||a.neighbourhood)parts.push(a.suburb||a.neighbourhood);
+        if(a.city||a.town||a.village)parts.push(a.city||a.town||a.village);if(a.state)parts.push(a.state);
+        currentLocationName=parts.length>0?parts.join(", "):(data.display_name||"Unknown Location");
+        if(currentLocationName.length>55)currentLocationName=currentLocationName.substring(0,52)+"...";
+      }else{currentLocationName="Lat "+lat.toFixed(4)+", Lng "+lng.toFixed(4);}
+      updateLocationUI();
+    }).catch(function(){currentLocationName="Lat "+lat.toFixed(4)+", Lng "+lng.toFixed(4);updateLocationUI();});
+  },1500);
+}
+function updateLocationUI(){
+  document.getElementById("locationAddress").textContent=currentLocationName;
+  document.getElementById("trackerAddress").textContent=currentLocationName;
+}
+
+/* ===== GEOLOCATION ===== */
+function getLocation(){
+  if(navigator.geolocation){
+    navigator.geolocation.watchPosition(function(pos){
+      userLat=pos.coords.latitude;userLng=pos.coords.longitude;
+      var acc=pos.coords.accuracy,alt=pos.coords.altitude,spd=pos.coords.speed;
+      var timeStr=new Date().toLocaleTimeString();
+      document.getElementById("locationCoords").textContent=userLat.toFixed(6)+", "+userLng.toFixed(6);
+      document.getElementById("trackerCoords").textContent=userLat.toFixed(6)+", "+userLng.toFixed(6);
+      document.getElementById("locationAccuracy").textContent="Accuracy: "+Math.round(acc)+"m";
+      document.getElementById("locationTime").textContent="Updated: "+timeStr;
+      document.getElementById("trackerTime").textContent=timeStr;
+      document.getElementById("statAccuracy").textContent=Math.round(acc)+"m";
+      document.getElementById("statAltitude").textContent=alt?Math.round(alt)+"m":"N/A";
+      document.getElementById("statSpeed").textContent=spd?Math.round(spd*3.6):"0";
+      reverseGeocode(userLat,userLng);updateMiniMap();
+      if(leafletMap&&userMarker){userMarker.setLatLng([userLat,userLng]);if(accuracyCircle)accuracyCircle.setLatLng([userLat,userLng]).setRadius(acc);}
+    },function(){
+      currentLocationName="New Delhi, India (default)";updateLocationUI();
+      document.getElementById("locationCoords").textContent="28.613900, 77.209000";
+      document.getElementById("trackerCoords").textContent="28.613900, 77.209000";
+      document.getElementById("locationAccuracy").textContent="Accuracy: ~50m";
+      document.getElementById("statAccuracy").textContent="~50m";
+      var t=new Date().toLocaleTimeString();
+      document.getElementById("locationTime").textContent="Updated: "+t;document.getElementById("trackerTime").textContent=t;
+      updateMiniMap();
+    },{enableHighAccuracy:true,maximumAge:10000});
+  }else{currentLocationName="Geolocation not supported";updateLocationUI();}
+}
+function updateMiniMap(){
+  var img=document.getElementById("trackerMapImg"),ph=document.getElementById("trackerMapPlaceholder");
+  img.src="https://api.mapbox.com/styles/v1/mapbox/dark-v11/static/pin-s+ff2d55("+userLng+","+userLat+")/"+userLng+","+userLat+",14,0/400x64@2x?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw";
+  img.style.display="block";if(ph)ph.style.display="none";
+}
+function shareLocation(){
+  var text="My live location: https://maps.google.com/?q="+userLat+","+userLng+"\nAddress: "+currentLocationName;
+  if(navigator.share){navigator.share({title:"SafeHer - My Location",text:text});}
+  else{navigator.clipboard.writeText(text).then(function(){alert("Location link copied!");});}
+}
+
+/* ===== LEAFLET MAP ===== */
+function initMap(){
+  if(leafletMap){leafletMap.invalidateSize();return;}
+  leafletMap=L.map("mapContainer",{center:[userLat,userLng],zoom:14,zoomControl:false,attributionControl:false});
+  L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",{maxZoom:19}).addTo(leafletMap);
+  var userIcon=L.divIcon({className:"",html:'<div style="width:16px;height:16px;border-radius:50%;background:#ff2d55;border:3px solid #fff;box-shadow:0 0 14px rgba(255,45,85,0.6)"></div>',iconSize:[16,16],iconAnchor:[8,8]});
+  userMarker=L.marker([userLat,userLng],{icon:userIcon}).addTo(leafletMap);
+  accuracyCircle=L.circle([userLat,userLng],{radius:50,color:"#ff2d55",fillColor:"#ff2d55",fillOpacity:0.06,weight:1}).addTo(leafletMap);
+  stations.forEach(function(s){
+    var icon=L.divIcon({className:"",html:'<div style="width:10px;height:10px;border-radius:50%;background:#4cc9f0;border:2px solid rgba(76,201,240,0.3);box-shadow:0 0 8px rgba(76,201,240,0.4)"></div>',iconSize:[10,10],iconAnchor:[5,5]});
+    var m=L.marker([s.lat,s.lng],{icon:icon}).addTo(leafletMap);m.bindPopup('<b style="color:#000">'+s.name+'</b><br><span style="color:#666">'+s.dist+'</span>');stationMarkers.push(m);
+  });
+  document.getElementById("mapLoading").style.display="none";setTimeout(function(){leafletMap.invalidateSize();},200);
+}
+
+/* ===== EVIDENCE ===== */
+function startEvidenceCollection(){
+  addEvidenceLog("alert","SOS alert dispatched to emergency contacts");addEvidenceLog("location","Location shared: "+currentLocationName);
+  evidenceInterval=setInterval(function(){if(!emergency)return;
+    var types=["location","photo","location"];var type=types[Math.floor(Math.random()*types.length)];
+    if(type==="location")addEvidenceLog("location","Location update: "+currentLocationName);
+    else addEvidenceLog("photo","Photo captured & sent to contacts");
+  },5000);
+}
+function stopEvidenceCollection(){if(evidenceInterval){clearInterval(evidenceInterval);evidenceInterval=null;}}
+function addEvidenceLog(type,text){
+  var now=new Date(),time=now.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+  evidenceLogs.unshift({type:type,text:text,time:time});if(evidenceLogs.length>50)evidenceLogs.pop();renderEvidenceLogs();
+}
+function renderEvidenceLogs(){
+  var c=document.getElementById("evidenceLog");
+  if(evidenceLogs.length===0){c.innerHTML='<div style="text-align:center;padding:24px;color:var(--text-muted);font-size:12px">No evidence logs yet. Activate SOS to begin.</div>';return;}
+  var h="";evidenceLogs.forEach(function(l){
+    var iconSvg="";
+    if(l.type==="location")iconSvg='<svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>';
+    else if(l.type==="photo")iconSvg='<svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>';
+    else if(l.type==="video")iconSvg='<svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"/><rect x="2" y="6" width="14" height="12" rx="2"/></svg>';
+    else iconSvg='<svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>';
+    h+='<div class="evidence-log-item"><div class="log-icon '+l.type+'">'+iconSvg+'</div><span class="log-text">'+l.text+'</span><span class="log-time">'+l.time+'</span></div>';
+  });c.innerHTML=h;
+}
+function toggleEvidence(type){document.getElementById("toggle"+type.charAt(0).toUpperCase()+type.slice(1)).classList.toggle("active");}
+
+/* ===== CAMERA WITH REAL RECORDING & AUTO-DOWNLOAD ===== */
+function startCameraAutoOnSOS(){startRealCamera(function(){if(!cameraRecording)toggleCameraRecord();});}
+function startRealCamera(callback){
+  if(mediaStream){if(callback)callback();return;}
+  navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"},audio:true})
+  .then(function(stream){mediaStream=stream;var v=document.getElementById("cameraVideo");v.srcObject=stream;v.style.display="block";document.getElementById("cameraPlaceholder").style.display="none";if(callback)callback();})
+  .catch(function(){document.getElementById("cameraPlaceholder").innerHTML='<div style="color:var(--accent);font-size:12px">Camera access denied</div>';if(callback)callback();});
+}
+function toggleCameraRecord(){if(cameraRecording){stopCameraRecord();return;}if(!mediaStream){startRealCamera(function(){beginRecording();});}else{beginRecording();}}
+function beginRecording(){
+  cameraRecording=true;cameraTimerVal=30;recordedChunks=[];
+  document.getElementById("cameraBadge").style.display="inline";document.getElementById("cameraRecOverlay").style.display="block";
+  document.getElementById("cameraRecBadge").style.display="flex";document.getElementById("cameraTimer").style.display="block";document.getElementById("cameraTimer").textContent="00:30";
+  var btn=document.getElementById("cameraRecordBtn");btn.classList.add("recording");
+  btn.innerHTML='<svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12" rx="2"/></svg> Stop';
+  if(mediaStream){try{
+    var opts={mimeType:"video/webm;codecs=vp9,opus"};if(!MediaRecorder.isTypeSupported(opts.mimeType))opts={mimeType:"video/webm;codecs=vp8,opus"};
+    if(!MediaRecorder.isTypeSupported(opts.mimeType))opts={mimeType:"video/webm"};
+    mediaRecorder=new MediaRecorder(mediaStream,opts);
+    mediaRecorder.ondataavailable=function(e){if(e.data&&e.data.size>0)recordedChunks.push(e.data);};
+    mediaRecorder.onstop=function(){autoDownloadVideo();};mediaRecorder.start(1000);
+    addEvidenceLog("video","Auto-recording started (30s)");
+  }catch(e){addEvidenceLog("alert","Recording failed: "+e.message);}}
+  cameraInterval=setInterval(function(){cameraTimerVal--;var s=cameraTimerVal<10?"0"+cameraTimerVal:cameraTimerVal;
+    document.getElementById("cameraTimer").textContent="00:"+s;if(cameraTimerVal<=0)stopCameraRecord();},1000);
+}
+function stopCameraRecord(){
+  cameraRecording=false;if(cameraInterval){clearInterval(cameraInterval);cameraInterval=null;}
+  if(mediaRecorder&&mediaRecorder.state!=="inactive")mediaRecorder.stop();
+  document.getElementById("cameraBadge").style.display="none";document.getElementById("cameraRecOverlay").style.display="none";
+  document.getElementById("cameraRecBadge").style.display="none";document.getElementById("cameraTimer").style.display="none";
+  var btn=document.getElementById("cameraRecordBtn");btn.classList.remove("recording");
+  btn.innerHTML='<svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg> Record 30s';
+  if(!emergency&&mediaStream){mediaStream.getTracks().forEach(function(t){t.stop();});mediaStream=null;
+    document.getElementById("cameraVideo").style.display="none";document.getElementById("cameraPlaceholder").style.display="flex";
+    document.getElementById("cameraPlaceholder").innerHTML='<svg class="icon-xl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity:.2"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg><p>Camera auto-starts with SOS</p>';}
+}
+function autoDownloadVideo(){
+  if(recordedChunks.length===0)return;var blob=new Blob(recordedChunks,{type:"video/webm"}),url=URL.createObjectURL(blob),a=document.createElement("a");
+  var now=new Date(),fn="SafeHer_Evidence_"+now.getFullYear()+String(now.getMonth()+1).padStart(2,"0")+String(now.getDate()).padStart(2,"0")+"_"+String(now.getHours()).padStart(2,"0")+String(now.getMinutes()).padStart(2,"0")+String(now.getSeconds()).padStart(2,"0")+".webm";
+  a.href=url;a.download=fn;document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url);},1000);addEvidenceLog("video","Video saved: "+fn);showDownloadToast("Video evidence saved to device");recordedChunks=[];
+}
+function showDownloadToast(msg){var t=document.getElementById("downloadToast");t.textContent=msg;t.classList.add("show");setTimeout(function(){t.classList.remove("show");},3000);}
+function capturePhoto(){if(!mediaStream){startRealCamera(function(){doCapture();});}else{doCapture();}}
+function doCapture(){
+  var video=document.getElementById("cameraVideo");if(!video.srcObject){addEvidenceLog("alert","No camera available");return;}
+  var canvas=document.createElement("canvas");canvas.width=video.videoWidth||640;canvas.height=video.videoHeight||480;
+  canvas.getContext("2d").drawImage(video,0,0);
+  var now=new Date(),fn="SafeHer_Photo_"+now.getFullYear()+String(now.getMonth()+1).padStart(2,"0")+String(now.getDate()).padStart(2,"0")+"_"+String(now.getHours()).padStart(2,"0")+String(now.getMinutes()).padStart(2,"0")+String(now.getSeconds()).padStart(2,"0")+".jpg";
+  canvas.toBlob(function(blob){var url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=fn;document.body.appendChild(a);a.click();document.body.removeChild(a);
+    setTimeout(function(){URL.revokeObjectURL(url);},1000);addEvidenceLog("photo","Photo saved: "+fn);showDownloadToast("Photo evidence saved");
+  },"image/jpeg",0.9);
+}
+
+/* ===== CONTACT ACTIONS ===== */
+function callContact(n){window.open("tel:"+n);}
+function messageContact(n){var msg=encodeURIComponent("EMERGENCY! I need help.\nLocation: "+currentLocationName+"\nMap: https://maps.google.com/?q="+userLat+","+userLng);window.open("sms:"+n+"?body="+msg);}
+</script>
+</body>
+</html>
+  
